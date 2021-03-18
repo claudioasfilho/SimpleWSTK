@@ -1,0 +1,50 @@
+# Silicon Labs Project Configuration Tools: slcp, v0, Component selection file.
+include:
+- path: ''
+  file_list:
+  - {path: app.h}
+package: Bluetooth
+configuration:
+- {name: SL_STACK_SIZE, value: '2752'}
+- {name: SL_HEAP_SIZE, value: '9200'}
+description: |
+  This example demonstrates the bare minimum needed for a Bluetooth C application that allows Over-the-Air Device Firmware Upgrading (OTA DFU). The application starts advertising after boot and restarts advertising after a connection is closed.
+label: SimpleWSTK
+readme:
+- {path: ../../../../../Applications/SimplicityStudio5.app/Contents/Eclipse/developer/sdks/gecko_sdk_suite/v3.1/app/bluetooth/documentation/example/soc_empty/readme.html}
+source:
+- {path: main.c}
+- {path: app.c}
+- {path: app_properties.c}
+project_name: SimpleWSTK
+quality: production
+component:
+- {id: app_log}
+- {id: brd4001a}
+- {id: brd4182a_b05}
+- instance: [vcom]
+  id: iostream_usart
+- {id: mpu}
+- {id: component_catalog}
+- {id: EFR32MG22C224F512IM40}
+- {id: ota_dfu}
+- {id: bootloader_interface}
+- {id: rail_util_pti}
+- {id: app_assert}
+- {id: bt_fp_soc_default}
+other_file:
+- {path: create_bl_files.bat}
+- {path: create_bl_files.sh}
+- {path: readme_img0.png}
+- {path: readme_img1.png}
+- {path: readme_img2.png}
+- {path: readme_img3.png}
+- {path: readme_img4.png}
+tag: ['hardware:rf:band:2400']
+category: Bluetooth Examples
+toolchain_settings: []
+ui_hints:
+  highlight:
+  - {path: readme.html, focus: true}
+  - {path: config/btconf/gatt_configuration.btconf}
+

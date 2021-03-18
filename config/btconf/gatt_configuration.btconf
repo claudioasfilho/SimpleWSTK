@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--Custom BLE GATT-->
+<gatt gatt_caching="true" generic_attribute_service="true" header="gatt_db.h" name="Custom BLE GATT" out="gatt_db.c" prefix="gattdb_">
+  
+  <!--Generic Access-->
+  <service advertise="false" name="Generic Access" requirement="mandatory" sourceId="org.bluetooth.service.generic_access" type="primary" uuid="1800">
+    <informativeText>Abstract: The generic_access service contains generic information about the device. All available Characteristics are readonly. </informativeText>
+    
+    <!--Device Name-->
+    <characteristic const="false" id="device_name" name="Device Name" sourceId="org.bluetooth.characteristic.gap.device_name" uuid="2A00">
+      <informativeText/>
+      <value length="13" type="utf-8" variable_length="false">SimpleWSTK</value>
+      <properties>
+        <read authenticated="false" bonded="false" encrypted="false"/>
+        <write authenticated="false" bonded="false" encrypted="false"/>
+      </properties>
+    </characteristic>
+  </service>
+  
+  <!--Custom Service-->
+  <service advertise="true" id="CustomService" name="Custom Service" requirement="mandatory" sourceId="" type="primary" uuid="a20d8e9f-19f6-9d0c-3312-55039a236067">
+    <informativeText/>
+    
+    <!--customChar-->
+    <characteristic const="false" id="customChar" name="customChar" sourceId="" uuid="9a5612f7-7001-9fe4-edd8-b4bcea80707b">
+      <description>customChar</description>
+      <informativeText/>
+      <value length="100" type="hex" variable_length="false"/>
+      <properties>
+        <read authenticated="false" bonded="false" encrypted="false"/>
+        <notify authenticated="false" bonded="false" encrypted="false"/>
+      </properties>
+    </characteristic>
+  </service>
+</gatt>
