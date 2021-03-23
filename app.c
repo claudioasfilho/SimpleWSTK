@@ -46,7 +46,7 @@ static uint8_t ConnectionHandle;
 static uint16_t NotificationsEnabled =0;
 
 
-void updateCustomData(uint8_t data)
+void updateCustomData()
 {
 
   int i;
@@ -58,11 +58,9 @@ void updateCustomData(uint8_t data)
   sl_bt_gatt_server_write_attribute_value(gattdb_customChar,
                                           0,
                                            sizeof(customCharData),
-                                           &customCharData
+                                           (uint8_t*)&customCharData
                                            );
 
-  sl_app_log((char)customCharData);
-  sl_app_log("\r\n");
 }
 
 void fillCustomData()
@@ -77,7 +75,7 @@ void fillCustomData()
   sl_bt_gatt_server_write_attribute_value(gattdb_customChar,
                                           0,
                                            sizeof(customCharData),
-                                           &customCharData
+                                           (uint8_t*)&customCharData
                                            );
 
   printf("Data: %s \r\n",customCharData);
@@ -89,7 +87,7 @@ static uint32_t NotiCounter = 0;
 
 void sendNotification()
 {
-
+  sl_status_t sc;
 
 customCharData[99] = (NotiCounter & 0xff000000UL) >> 24;
 customCharData[98] = (NotiCounter & 0x00ff0000UL) >> 16;
@@ -99,18 +97,24 @@ customCharData[96] = (NotiCounter & 0x000000ffUL)      ;
 
   if (NotificationsEnabled == gatt_notification)
            {
-            sl_bt_gatt_server_send_characteristic_notification(
-                              ConnectionHandle,
+                sc = sl_bt_gatt_server_send_notification(ConnectionHandle,
                               gattdb_customChar,
                               sizeof(customCharData),
-                              &customCharData,
-                              sizeof(customCharData));
-                          sl_app_log("Notification Sent %d \r\n", NotiCounter);
-                          sl_app_log(customCharData);
-                          sl_app_log("\r\n");
-                          NotiCounter++;
+                              (uint8_t*)&customCharData);
+
+
+            if(sc != SL_STATUS_OK)
+              {
+                sl_app_log("[E: 0x%04x] Failed to send set %x \n",(int)sc, NotiCounter);
+              }
+
+            else
+
+              {         sl_app_log("Notification Sent %x \r\n", NotiCounter++);
+                          //NotiCounter++;
+              }
            }
-  //else printf("Notifications disabled\r\n");
+
 
 
 }
@@ -139,9 +143,7 @@ SL_WEAK void app_process_action(void)
 void sl_bt_on_event(sl_bt_msg_t *evt)
 {
   sl_status_t sc;
-  bd_addr address;
-  uint8_t address_type;
-  uint8_t system_id[8];
+
 
   switch (SL_BT_MSG_ID(evt->header)) {
     // -------------------------------
@@ -180,6 +182,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       sl_app_assert(sc == SL_STATUS_OK,
                     "[E: 0x%04x] Failed to start advertising\n",
                     (int)sc);
+      sl_bt_connection_set_default_preferred_phy(2,0xff);
       break;
 
     case sl_bt_evt_gatt_server_attribute_value_id:
@@ -207,8 +210,8 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                 sl_bt_gatt_server_read_attribute_value  ( gattdb_customChar,
                                                                        0,
                                                                         1,
-                                                                        sizeof(customCharData),
-                                                                        &customCharData
+                                                                        (size_t *)sizeof(customCharData),
+                                                                        (uint8_t*)&customCharData
                                                                         );
 
 
@@ -228,25 +231,25 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
     case  sl_bt_evt_system_soft_timer_id:
 
-          if (evt->data.evt_system_soft_timer.handle == 0)
-            {
-              sl_bt_gatt_server_send_characteristic_notification(
-                  ConnectionHandle,
-                  gattdb_customChar,
-                  sizeof(customCharData),
-                  &customCharData,
-                  sizeof(customCharData));
-              sl_app_log("soft timer %x \r\n", customCharData);
-
-            }
-
-          if (evt->data.evt_system_soft_timer.handle == 254)
-            {
-             // static uint8_t counter = 0;
-
-              //counter++;
-              //updateCustomData(counter);
-            }
+//          if (evt->data.evt_system_soft_timer.handle == 0)
+//            {
+//              sl_bt_gatt_server_send_characteristic_notification(
+//                  ConnectionHandle,
+//                  gattdb_customChar,
+//                  sizeof(customCharData),
+//                  (uint8_t*)&customCharData,
+//                  (uint8_t)sizeof(customCharData));
+//              sl_app_log("soft timer %x \r\n", customCharData);
+//
+//            }
+//
+//          if (evt->data.evt_system_soft_timer.handle == 254)
+//            {
+//             // static uint8_t counter = 0;
+//
+//              //counter++;
+//              //updateCustomData(counter);
+//            }
       break;
 
 
@@ -257,9 +260,27 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     case sl_bt_evt_connection_opened_id:
       ConnectionHandle = evt->data.evt_connection_opened.connection;
 
-      sl_bt_connection_set_parameters(ConnectionHandle,6,6,0,10,0,65535);
+//      sc = sl_bt_connection_set_parameters(ConnectionHandle,6,6,0,10,0,65535);
+//
+//      if(sc != SL_STATUS_OK)
+//                          {
+//                            sl_app_log("[E: 0x%04x] Failed to change parameters \n",(int)sc);
+//                          }
+//
+      sc = sl_bt_connection_set_preferred_phy(ConnectionHandle, 2,0xff);
 
-      sl_bt_connection_set_preferred_phy(ConnectionHandle, 2,0xff);
+
+                  if(sc != SL_STATUS_OK)
+                    {
+                      sl_app_log("[E: 0x%04x] Failed to set PHY \n",(int)sc);
+                    }
+
+                  else
+
+                    {         sl_app_log("PHY message sent to Connection %d \r\n",ConnectionHandle);
+
+                    }
+
 
 
       break;
@@ -267,7 +288,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       //Triggered whenever the connection parameters are changed and at any time a connection is established.
     case sl_bt_evt_connection_parameters_id:
 
-      sl_bt_connection_set_preferred_phy(ConnectionHandle, 2,0xff);
+     // sl_bt_connection_set_preferred_phy(ConnectionHandle, 2,0xff);
 
       break;
 
